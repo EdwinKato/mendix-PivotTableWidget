@@ -9,36 +9,33 @@
 
 package communitycommons.actions;
 
-import com.mendix.systemwideinterfaces.core.IMendixObject;
-import communitycommons.StringUtils;
+import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
+import com.mendix.systemwideinterfaces.core.ISession;
 import com.mendix.webui.CustomJavaAction;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 
 /**
- * Stores an base 64 encoded string plain in the provided target file document
- * 
- * Note that targetFile will be committed.
+ * This function commits an object in a seperate context and transaction, making sure it gets persisted in the database (regarding which exception happens after invocation).
  */
-public class Base64DecodeToFile extends CustomJavaAction<Boolean>
+public class commitInSeparateDatabaseTransaction extends CustomJavaAction<Boolean>
 {
-	private String encoded;
-	private IMendixObject __targetFile;
-	private system.proxies.FileDocument targetFile;
+	private IMendixObject mxObject;
 
-	public Base64DecodeToFile(IContext context, String encoded, IMendixObject targetFile)
+	public commitInSeparateDatabaseTransaction(IContext context, IMendixObject mxObject)
 	{
 		super(context);
-		this.encoded = encoded;
-		this.__targetFile = targetFile;
+		this.mxObject = mxObject;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
-		this.targetFile = __targetFile == null ? null : system.proxies.FileDocument.initialize(getContext(), __targetFile);
-
 		// BEGIN USER CODE
-		StringUtils.base64DecodeToFile(getContext(), encoded, targetFile);
+		ISession session = getContext().getSession();
+		IContext newContext = session.createContext();
+		Core.commit(newContext, mxObject);
+		newContext.endTransaction();
 		return true;
 		// END USER CODE
 	}
@@ -49,7 +46,7 @@ public class Base64DecodeToFile extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "Base64DecodeToFile";
+		return "commitInSeparateDatabaseTransaction";
 	}
 
 	// BEGIN EXTRA CODE

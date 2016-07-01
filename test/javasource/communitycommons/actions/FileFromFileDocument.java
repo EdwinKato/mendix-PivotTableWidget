@@ -10,25 +10,27 @@
 package communitycommons.actions;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import org.apache.commons.io.IOUtils;
 import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
 
 /**
- * Set the contents of a FileDocument with the contents of a file which is a resource.
+ * Reads contents from a FileDocument and stores it in a file on the local (server) storage.
  */
-public class GetFileContentsFromResource extends CustomJavaAction<Boolean>
+public class FileFromFileDocument extends CustomJavaAction<Boolean>
 {
-	private String filename;
+	private String targetFile;
 	private IMendixObject __fileDocument;
 	private system.proxies.FileDocument fileDocument;
 
-	public GetFileContentsFromResource(IContext context, String filename, IMendixObject fileDocument)
+	public FileFromFileDocument(IContext context, String targetFile, IMendixObject fileDocument)
 	{
 		super(context);
-		this.filename = filename;
+		this.targetFile = targetFile;
 		this.__fileDocument = fileDocument;
 	}
 
@@ -38,13 +40,13 @@ public class GetFileContentsFromResource extends CustomJavaAction<Boolean>
 		this.fileDocument = __fileDocument == null ? null : system.proxies.FileDocument.initialize(getContext(), __fileDocument);
 
 		// BEGIN USER CODE
-		File myFile = new File(Core.getConfiguration().getResourcesPath() + 
-				File.separator + filename);
-
-		FileInputStream fis = new FileInputStream(myFile);
-		Core.storeFileDocumentContent(getContext(), fileDocument.getMendixObject(), 
-				filename, fis);
-		
+		File output = new File(targetFile);
+		FileOutputStream fos = new FileOutputStream(output);
+		InputStream is = Core.getFileDocumentContent(getContext(), 
+				fileDocument.getMendixObject());
+		IOUtils.copy(is, fos);
+		fos.close();
+		is.close();
 		return true;
 		// END USER CODE
 	}
@@ -55,7 +57,7 @@ public class GetFileContentsFromResource extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "GetFileContentsFromResource";
+		return "FileFromFileDocument";
 	}
 
 	// BEGIN EXTRA CODE

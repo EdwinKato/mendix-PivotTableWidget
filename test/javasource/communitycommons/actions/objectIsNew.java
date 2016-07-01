@@ -9,37 +9,28 @@
 
 package communitycommons.actions;
 
-import com.mendix.systemwideinterfaces.core.IMendixObject;
-import communitycommons.StringUtils;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 
 /**
- * Stores an base 64 encoded string plain in the provided target file document
- * 
- * Note that targetFile will be committed.
+ * Returns true if this object is new (not committed in the database).
  */
-public class Base64DecodeToFile extends CustomJavaAction<Boolean>
+public class objectIsNew extends CustomJavaAction<Boolean>
 {
-	private String encoded;
-	private IMendixObject __targetFile;
-	private system.proxies.FileDocument targetFile;
+	private IMendixObject mxObject;
 
-	public Base64DecodeToFile(IContext context, String encoded, IMendixObject targetFile)
+	public objectIsNew(IContext context, IMendixObject mxObject)
 	{
 		super(context);
-		this.encoded = encoded;
-		this.__targetFile = targetFile;
+		this.mxObject = mxObject;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
-		this.targetFile = __targetFile == null ? null : system.proxies.FileDocument.initialize(getContext(), __targetFile);
-
 		// BEGIN USER CODE
-		StringUtils.base64DecodeToFile(getContext(), encoded, targetFile);
-		return true;
+		return this.mxObject.isNew();
 		// END USER CODE
 	}
 
@@ -49,7 +40,7 @@ public class Base64DecodeToFile extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "Base64DecodeToFile";
+		return "objectIsNew";
 	}
 
 	// BEGIN EXTRA CODE

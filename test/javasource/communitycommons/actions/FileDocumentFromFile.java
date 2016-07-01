@@ -9,33 +9,39 @@
 
 package communitycommons.actions;
 
+import java.io.File;
+import java.io.FileInputStream;
+import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
-import communitycommons.ORM;
 
 /**
- * Copies all common primitive attributes from source to target, which are not necessarily of the same type. This is useful to, for example, translate database object into view objects.
- * 
- * Note that no automatic type conversion is done. 
+ * Loads a file from the local (server) storage and stores it inside a FileDocument.
  */
-public class copyAttributes extends CustomJavaAction<Boolean>
+public class FileDocumentFromFile extends CustomJavaAction<Boolean>
 {
-	private IMendixObject source;
-	private IMendixObject target;
+	private String file;
+	private IMendixObject __fileDocument;
+	private system.proxies.FileDocument fileDocument;
 
-	public copyAttributes(IContext context, IMendixObject source, IMendixObject target)
+	public FileDocumentFromFile(IContext context, String file, IMendixObject fileDocument)
 	{
 		super(context);
-		this.source = source;
-		this.target = target;
+		this.file = file;
+		this.__fileDocument = fileDocument;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
+		this.fileDocument = __fileDocument == null ? null : system.proxies.FileDocument.initialize(getContext(), __fileDocument);
+
 		// BEGIN USER CODE
-		ORM.copyAttributes(getContext(), source, target);
+		FileInputStream fis = new FileInputStream(new File(this.file));
+		Core.storeFileDocumentContent(getContext(), fileDocument.getMendixObject(), 
+				this.file, fis);
+		fis.close();
 		return true;
 		// END USER CODE
 	}
@@ -46,7 +52,7 @@ public class copyAttributes extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "copyAttributes";
+		return "FileDocumentFromFile";
 	}
 
 	// BEGIN EXTRA CODE
