@@ -99,7 +99,7 @@
 
                 if (context) {
                     this.widgetContext = context;
-                    this.contextGUID = context.getTrackID();
+                    this.contextGUID = context.getTrackId();
                     // console.log(this.domNode.id + ": applyContext, context object GUID: " + this.contextGUID);
                     if (this.checkProperties()) {
                         if (this.callGetDataMicroflow === "crtOnly" || this.callGetDataMicroflow === "crtAndChg") {
