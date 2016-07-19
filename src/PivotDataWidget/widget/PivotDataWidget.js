@@ -1,5 +1,4 @@
-/*jslint browser:true, nomen:true, plusplus: true */
-/*global mx, mendix, require, console, alert, define, module, logger */
+/*global mx, mendix, require, console, define, module, logger */
 /**
 
 	PivotDataWidget
@@ -43,21 +42,21 @@
             cellValueAttrType               : null,
             validActionAttrTypeCombinations : [
                 "sum_Currency",
-                "sum_Decimal",
+                "sum_Float",
                 "sum_Integer",
                 "sum_Long",
                 "average_Currency",
-                "average_Decimal",
+                "average_Float",
                 "average_Integer",
                 "average_Long",
                 "min_Currency",
                 "min_DateTime",
-                "min_Decimal",
+                "min_Float",
                 "min_Integer",
                 "min_Long",
                 "max_Currency",
                 "max_DateTime",
-                "max_Decimal",
+                "max_Float",
                 "max_Integer",
                 "max_Long",
                 "display_String",
@@ -100,7 +99,7 @@
 
                 if (context) {
                     this.widgetContext = context;
-                    this.contextGUID = context.getTrackId();
+                    this.contextGUID = context.getTrackID();
                     // console.log(this.domNode.id + ": applyContext, context object GUID: " + this.contextGUID);
                     if (this.checkProperties()) {
                         if (this.callGetDataMicroflow === "crtOnly" || this.callGetDataMicroflow === "crtAndChg") {
@@ -267,20 +266,13 @@
                             switch (this.cellValueAttrType) {
                             case "DateTime":
                                 minDateValue = this.parseDate(this.tresholdList[tresholdIndex].minValue, this.cellValueDateformat);
-                                this.tresholdList[tresholdIndex].minValue = minDateValue.getTime();
+                                this.tresholdList[tresholdIndex].minValue = Number(minDateValue);
                                 break;
 
                             default:
                                 this.tresholdList[tresholdIndex].minValue = Number(this.tresholdList[tresholdIndex].minValue);
                             }
                         }
-                    }
-                    
-                    if (this.cellValueAttrType === "Decimal") {
-                        if (this.precisionForDecimal < 0 || this.precisionForDecimal > 10) {
-                            errorMessageArray.push("Decimal precision for Decimal must be between 0 and 10");
-                        }
-                        
                     }
                 }
 
@@ -388,13 +380,16 @@
 
                 var
                     i,
+                    result,
                     sum = 0;
 
                 for (i = 0; i < valueArray.length; i = i + 1) {
                     sum = sum + valueArray[i];
                 }
-                return sum;
 
+                result = sum;
+
+                return result;
             },
 
             /**
@@ -405,8 +400,15 @@
              */
             getCellAverage: function (valueArray) {
 
-                return this.getCellSum(valueArray) / valueArray.length;
-                
+                var
+                    average,
+                    result;
+
+                average = this.getCellSum(valueArray) / valueArray.length;
+
+                result = average;
+
+                return result;
             },
 
             /**
@@ -632,8 +634,12 @@
                 case "Integer":
                 case "Long":
                 case "Currency":
-                case "DateTime":
+                case "Float":
                     keyArray = Object.keys(sortValueMap).sort(function (a, b) {return a - b; });
+                    break;
+
+                case "DateTime":
+                    keyArray = Object.keys(sortValueMap).sort(function (a, b) {return a.getTime() - b.getTime(); });
                     break;
 
                 default:
@@ -728,7 +734,7 @@
                     domClass.add(node, this.yLabelClass);
                     rowNode.appendChild(node);
 
-                    // Columns                    
+                    // Columns
                     yTotal = 0;
                     for (colIndex = 0; colIndex < this.xKeyArray.length; colIndex = colIndex + 1) {
                         // Get the ID
@@ -745,7 +751,7 @@
                                 for (tresholdIndex = 0; tresholdIndex < this.tresholdList.length; tresholdIndex = tresholdIndex + 1) {
                                     switch (this.cellValueAttrType) {
                                     case "DateTime":
-                                        tresholdCompareValue = this.parseDate(cellValue, this.cellValueDateformat).getTime();
+                                        tresholdCompareValue = this.parseDate(cellValue, this.cellValueDateformat);
                                         break;
 
                                     default:
@@ -769,7 +775,7 @@
                             }
                             // Process the totals, if requested
                             if (this.showTotalColumn) {
-                                yTotal = yTotal + cellValue;
+                                yTotal       = yTotal + cellValue;
                             }
                             if (this.showTotalRow) {
                                 if (xTotalsMap[xIdValue]) {
@@ -782,10 +788,6 @@
                             switch (this.cellValueAttrType) {
                             case "Currency":
                                 nodeValue = this.formatCurrency(cellValue);
-                                break;
-
-                            case "Decimal":
-                                nodeValue = this.formatDecimal(cellValue);
                                 break;
 
                             case "Integer":
@@ -822,15 +824,11 @@
                         node                = document.createElement("td");
                         switch (this.cellValueAttrType) {
                         case "Currency":
-                            node.innerHTML = this.formatDecimal(yTotal, 2);
-                            break;
-
-                        case "Decimal":
-                            node.innerHTML = this.formatDecimal(yTotal);
+                            node.innerHTML = this.formatCurrency(yTotal);
                             break;
 
                         default:
-                            node.innerHTML = this.formatDecimal(yTotal, 0);
+                            node.innerHTML      = yTotal;
                         }
                         domClass.add(node, this.totalColumnCellClass);
                         rowNode.appendChild(node);
@@ -858,12 +856,8 @@
                             node.innerHTML = this.formatCurrency(cellValue);
                             break;
 
-                        case "Decimal":
-                            node.innerHTML = this.formatDecimal(cellValue);
-                            break;
-                                
                         default:
-                            node.innerHTML = cellValue;
+                            node.innerHTML      = cellValue;
                         }
                         domClass.add(node, this.totalRowCellClass);
                         footerRowNode.appendChild(node);
@@ -874,12 +868,8 @@
                         node.innerHTML = this.formatCurrency(yTotal);
                         break;
 
-                    case "Decimal":
-                        node.innerHTML = this.formatDecimal(yTotal);
-                        break;
-
                     default:
-                        node.innerHTML = yTotal;
+                        node.innerHTML      = yTotal;
                     }
                     domClass.add(node, this.totalRowCellClass);
                     footerRowNode.appendChild(node);
@@ -962,7 +952,7 @@
             },
 
             /**
-             * Called after object committed
+             * Called after creation of onCellClickEntity failed
              *
              */
             onClickMendixObjectCommitted : function () {
@@ -1058,18 +1048,18 @@
                             if (colIndex === 0) {
                                 exportData += '""';
                             } else {
-                                exportData += ',"' + cell.text + '"';
+                                exportData += ',"' + cell.textContent + '"';
                             }
                         } else {
                             if (colIndex === 0) {
-                                exportData += '"' + cell.text + '"';
+                                exportData += '"' + cell.textContent + '"';
                             } else {
                                 if (useQuotes) {
                                     exportData += ',"';
                                 } else {
                                     exportData += ',';
                                 }
-                                exportData += cell.text;
+                                exportData += cell.textContent;
                                 if (useQuotes) {
                                     exportData += '"';
                                 }
@@ -1164,7 +1154,7 @@
                 case "Integer":
                 case "Long":
                 case "Currency":
-                case "Decimal":
+                case "Float":
                 case "DateTime":
                     result = Number(attrValue);
                     break;
@@ -1267,21 +1257,6 @@
                 }
 
                 return result;
-            },
-
-            /**
-             * Format a decimal value
-             *
-             * @param value         The value to format
-             * @param precision     The number of decimals to use, optional, precisionForDecimal is used if not specified
-             * @returns {String}    The formatted value
-             */
-            formatDecimal: function (value, precision) {
-
-                if (precision === undefined) {
-                    precision = this.precisionForDecimal;
-                }
-                return value.toFixed(precision);
             },
 
             /**
